@@ -27,6 +27,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
 
     @IBAction func startButtonPress(_ sender: UIButton) {
         advertiseDevice()
+        // Change the button to stop button
+        // Disappear the button and write text called Monitoring
+        // Round edges for the buttons
     }
     
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
@@ -46,13 +49,18 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             print(beacon.proximity.rawValue)
         }
         
-        let filtered = beacons.filter({$0.proximity == .immediate || $0.proximity != .unknown})
+        let filteredBeacon = beacons.filter({$0.proximity != .unknown})
+        let firstBeacon = filteredBeacon.first
         
-        if(filtered.count > 0) {
+        if(firstBeacon?.proximity == .immediate) {
             self.view.backgroundColor = UIColor.red
             AudioServicesPlayAlertSound(SystemSoundID(kSystemSoundID_Vibrate))
+        } else if(firstBeacon?.proximity == .near) {
+            self.view.backgroundColor = UIColor.orange
+            // Make this a different type of sound
+            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
         } else {
-            self.view.backgroundColor = UIColor.white
+           self.view.backgroundColor = UIColor.white
         }
     }
 
