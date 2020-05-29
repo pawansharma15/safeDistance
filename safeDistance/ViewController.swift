@@ -14,9 +14,9 @@ import AudioToolbox
 class ViewController: UIViewController, CLLocationManagerDelegate {
     
     var uuid = UUID(uuidString: "B9407F30-F5F8-466E-AFF9-25556B57FE6D")
-    var distance = CLProximity.unknown
     var locationManager:CLLocationManager = CLLocationManager()
     var peripheralManager:CBPeripheralManager = CBPeripheralManager()
+    var previousProximity:CLProximity? = .unknown
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -27,9 +27,11 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
 
     @IBAction func startButtonPress(_ sender: UIButton) {
         advertiseDevice()
-        // Change the button to stop button
-        // Disappear the button and write text called Monitoring
-        // Round edges for the buttons
+        // Vibrate only if the status has changed - DONE
+        // Run App in background, see why minimizing to maximizing not working
+        // Disappear the button and write text called Monitoring, on clicking START
+        // Put Google Ad
+        // Create App Icon
     }
     
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
@@ -43,8 +45,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     }
 
     func locationManager(_ manager: CLLocationManager, didRangeBeacons beacons: [CLBeacon], in region: CLBeaconRegion) {
-        print(beacons.count)
         
+        print(beacons.count)
         for beacon:CLBeacon in beacons {
             print(beacon.proximity.rawValue)
         }
@@ -52,16 +54,22 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         let filteredBeacon = beacons.filter({$0.proximity != .unknown})
         let firstBeacon = filteredBeacon.first
         
-        if(firstBeacon?.proximity == .immediate) {
-            self.view.backgroundColor = UIColor.red
-            AudioServicesPlayAlertSound(SystemSoundID(kSystemSoundID_Vibrate))
-        } else if(firstBeacon?.proximity == .near) {
-            self.view.backgroundColor = UIColor.orange
-            // Make this a different type of sound
-            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-        } else {
-           self.view.backgroundColor = UIColor.white
+        let currentProximity = firstBeacon?.proximity
+        
+        if(currentProximity != previousProximity) {
+            if(currentProximity == .immediate) {
+                self.view.backgroundColor = UIColor.red
+                vibrate(count:3)
+            } else if(currentProximity == .near) {
+                self.view.backgroundColor = UIColor.orange
+                vibrate(count:2)
+            } else {
+               self.view.backgroundColor = UIColor.white
+                vibrate(count:1)
+            }
         }
+        
+        previousProximity = currentProximity
     }
 
     func scanBeakons() {
@@ -89,5 +97,13 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         _ = CBCentralManager(delegate: nil, queue: nil, options: [CBCentralManagerOptionShowPowerAlertKey:true])
     }
     
+    func vibrate(count: Int) {
+        if count == 0 {
+            return
+        }
+        AudioServicesPlaySystemSoundWithCompletion(kSystemSoundID_Vibrate) { [weak self] in
+            self?.vibrate(count: count - 1)
+        }
+    }
 }
 
